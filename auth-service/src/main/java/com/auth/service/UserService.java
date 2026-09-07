@@ -39,15 +39,15 @@ public class UserService {
                 .role(Role.USER)
                 .build();
 
-        User user = userRepository.save(registerUser);
+        /*User user = */userRepository.save(registerUser);
 
-        RegisterUserLog registerUserLog = RegisterUserLog.builder()
+        /*RegisterUserLog registerUserLog = RegisterUserLog.builder()
                 .uuid(user.getId())
                 .message("Зарегистрирован новый аккаунт '" + user.getUsername() + "'")
                 .type(TypeLog.REGISTER_USER)
                 .build();
 
-        kafkaProducerService.sendLogRegister(registerUserLog);
+        kafkaProducerService.sendLogRegister(registerUserLog);*/
     }
 
     @Transactional
