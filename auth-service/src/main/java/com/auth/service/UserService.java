@@ -5,13 +5,16 @@ import com.auth.model.dto.RegisterUserRq;
 import com.auth.model.dto.TypeLog;
 import com.auth.model.dto.LoginRs;
 import com.auth.model.dto.LoginUserRq;
+import com.auth.model.entity.RefreshToken;
 import com.auth.model.entity.Role;
 import com.auth.model.entity.User;
 import com.auth.producer.KafkaProducerService;
 import com.auth.repository.UserRepository;
 import com.auth.security.JwtService;
+import com.auth.security.RefreshTokenService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,13 +22,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final KafkaProducerService kafkaProducerService;
+    //private final KafkaProducerService kafkaProducerService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void register (RegisterUserRq dto) {
@@ -60,8 +65,27 @@ public class UserService {
                         )
                 );
 
-        String token = jwtService.generateToken(authentication);
+        String accessToken = jwtService.generateToken(authentication);
 
-        return new LoginRs(token);
+        User user = userRepository
+                .findByUsername(dto.getUsername())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден!"));
+
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return new LoginRs(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public void logout (String token) {
+        try {
+            RefreshToken refreshToken = refreshTokenService.validate(token);
+            refreshTokenService.revoke(refreshToken);
+        }
+
+        catch (Exception e) {
+            log.error("Произошла ошибка: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

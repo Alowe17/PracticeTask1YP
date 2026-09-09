@@ -1,0 +1,47 @@
+package com.auth.model.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.Getter;
+import lombok.Builder;
+
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "refresh_tokens")
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder
+public class RefreshToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false, unique = true, length = 64)
+    private String tokenHash;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(nullable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(nullable = false)
+    private OffsetDateTime expiresAt;
+
+    @Column(nullable = false)
+    private boolean revoked;
+}
