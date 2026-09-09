@@ -11,9 +11,9 @@ import java.time.OffsetDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterUserLog {
+public class AuditEvent {
     private String uuid;
     private String message;
-    private OffsetDateTime createTime = OffsetDateTime.now();
-    private TypeLog type;
+    private OffsetDateTime createTime;
+    private AuditEventType type;
 }

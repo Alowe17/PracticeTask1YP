@@ -1,10 +1,6 @@
 package com.auth.service;
 
-import com.auth.model.dto.RegisterUserLog;
-import com.auth.model.dto.RegisterUserRq;
-import com.auth.model.dto.TypeLog;
-import com.auth.model.dto.LoginRs;
-import com.auth.model.dto.LoginUserRq;
+import com.auth.model.dto.*;
 import com.auth.model.entity.RefreshToken;
 import com.auth.model.entity.Role;
 import com.auth.model.entity.User;
@@ -21,13 +17,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    //private final KafkaProducerService kafkaProducerService;
+    private final KafkaProducerService kafkaProducerService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -44,15 +42,16 @@ public class UserService {
                 .role(Role.USER)
                 .build();
 
-        /*User user = */userRepository.save(registerUser);
+        User user = userRepository.save(registerUser);
 
-        /*RegisterUserLog registerUserLog = RegisterUserLog.builder()
+        AuditEvent registerUserLog = AuditEvent.builder()
                 .uuid(user.getId())
                 .message("Зарегистрирован новый аккаунт '" + user.getUsername() + "'")
-                .type(TypeLog.REGISTER_USER)
+                .type(AuditEventType.USER_REGISTERED)
+                .createTime(OffsetDateTime.now())
                 .build();
 
-        kafkaProducerService.sendLogRegister(registerUserLog);*/
+        kafkaProducerService.sendAuditEvent(registerUserLog);
     }
 
     @Transactional
@@ -73,6 +72,15 @@ public class UserService {
 
         String refreshToken = refreshTokenService.createRefreshToken(user);
 
+        AuditEvent auditEvent = AuditEvent.builder()
+                .uuid(user.getId())
+                .message("Авторизовался пользователь '" + user.getUsername() +"'!")
+                .type(AuditEventType.USER_LOGGED_IN)
+                .createTime(OffsetDateTime.now())
+                .build();
+
+        kafkaProducerService.sendAuditEvent(auditEvent);
+
         return new LoginRs(accessToken, refreshToken);
     }
 
@@ -81,9 +89,18 @@ public class UserService {
         try {
             RefreshToken refreshToken = refreshTokenService.validate(token);
             refreshTokenService.revoke(refreshToken);
-        }
 
-        catch (Exception e) {
+            User user = refreshToken.getUser();
+
+            AuditEvent auditEvent = AuditEvent.builder()
+                    .uuid(user.getId())
+                    .message("Деавторизовался пользователь '" + user.getUsername() + "'!")
+                    .type(AuditEventType.USER_LOGGED_OUT)
+                    .createTime(OffsetDateTime.now())
+                    .build();
+
+            kafkaProducerService.sendAuditEvent(auditEvent);
+        } catch (Exception e) {
             log.error("Произошла ошибка: {}", e.getMessage());
             throw new RuntimeException(e);
         }
