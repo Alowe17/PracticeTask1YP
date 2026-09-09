@@ -3,16 +3,19 @@ package com.auth.model.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class RegisterUserRq {
     @NotBlank(message = "Никнейм обязателен!")
-    @Max(message = "Максимальная длина никнейма 19!", value = 19)
-    @Min(message = "Минимальная длина никнейма 3!", value = 3)
+    @Length(message = "Максимальная длина никнейма 19!", max = 19, min = 3)
     private String username;
     @NotBlank(message = "Пароль обязателен!")
-    @Max(message = "Максимальная длина пароля 50!", value = 50)
-    @Min(message = "Минимальная длина пароля 9!", value = 9)
+    @Length(message = "Минимальная длина пароля 9, максимальная 50!", max = 50, min = 9)
     private String password;
 }
