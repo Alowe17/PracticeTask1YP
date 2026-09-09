@@ -14,11 +14,11 @@ import java.time.Instant;
 public class JwtService {
     private final JwtEncoder jwtEncoder;
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(String username) {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .subject(authentication.getName())
+                .subject(username)
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(3600))
                 .issuer("auth-service")

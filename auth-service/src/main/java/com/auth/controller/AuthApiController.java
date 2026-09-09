@@ -1,9 +1,7 @@
 package com.auth.controller;
 
-import com.auth.model.dto.LoginRs;
-import com.auth.model.dto.LoginUserRq;
-import com.auth.model.dto.RefreshTokenRq;
-import com.auth.model.dto.RegisterUserRq;
+import com.auth.model.dto.*;
+import com.auth.security.RefreshTokenService;
 import com.auth.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthApiController {
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -28,8 +27,8 @@ public class AuthApiController {
     }
 
     @PostMapping("/refresh")
-    public LoginRs refreshToken (@RequestBody RefreshTokenRq refreshToken) {
-        return userService.refreshToken(refreshToken);
+    public AccessToken refreshToken (@RequestBody RefreshTokenRq refreshToken) {
+        return refreshTokenService.generateAccessToken(refreshToken);
     }
 
     @PostMapping("/logout")

@@ -64,7 +64,7 @@ public class UserService {
                         )
                 );
 
-        String accessToken = jwtService.generateToken(authentication);
+        String accessToken = jwtService.generateToken(authentication.getName());
 
         User user = userRepository
                 .findByUsername(dto.getUsername())

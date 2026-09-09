@@ -1,5 +1,7 @@
 package com.auth.security;
 
+import com.auth.model.dto.AccessToken;
+import com.auth.model.dto.RefreshTokenRq;
 import com.auth.model.entity.RefreshToken;
 import com.auth.model.entity.User;
 import com.auth.repository.RefreshTokenRepository;
@@ -20,6 +22,7 @@ import java.util.Base64;
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final JwtService jwtService;
 
     @Transactional
     public String createRefreshToken (User user) {
@@ -79,5 +82,19 @@ public class RefreshTokenService {
         }
 
         return result.toString();
+    }
+
+    public AccessToken generateAccessToken (RefreshTokenRq refreshTokenRq) {
+        RefreshToken refreshToken;
+
+        try {
+            refreshToken = validate(refreshTokenRq.getRefreshToken());
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось проверить данные!");
+        }
+
+        String accessToken = jwtService.generateToken(refreshToken.getUser().getUsername());
+
+        return new AccessToken(accessToken);
     }
 }
