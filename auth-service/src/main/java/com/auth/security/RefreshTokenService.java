@@ -44,7 +44,11 @@ public class RefreshTokenService {
     public RefreshToken validate (String token) throws Exception {
         RefreshToken refreshToken = refreshTokenRepository
                 .findByTokenHash(hash(token))
-                .orElseThrow(() -> new RuntimeException("Не удалось проверить данные!"));
+                .orElseThrow(() -> {
+                    log.error("Не удалось найти нужный ттокен в базе данных");
+                    return new RuntimeException("Не удалось проверить данные!");
+                });
+
 
         if (refreshToken.isRevoked()) {
             throw new RuntimeException("Токен был отозван!");
@@ -90,6 +94,7 @@ public class RefreshTokenService {
         try {
             refreshToken = validate(refreshTokenRq.getRefreshToken());
         } catch (Exception e) {
+            log.error("Ошибка проверки токена: " + e.getMessage());
             throw new RuntimeException("Не удалось проверить данные!");
         }
 

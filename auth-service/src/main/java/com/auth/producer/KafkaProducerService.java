@@ -17,6 +17,16 @@ public class KafkaProducerService {
     public void sendAuditEvent (AuditEvent dto) {
         String topic = "audit-service";
         log.info("Отправка события. Тип: {}, uuid: {}! Дата: {}", dto.getType(), dto.getUuid(), OffsetDateTime.now());
-        kafkaTemplate.send(topic, dto);
+        kafkaTemplate.send(topic, dto).whenComplete((result, exception) -> {
+            if (exception != null) {
+                log.error("Не удалось отправить событие аудита. Тип: {}, uuid: {}", dto.getType(), dto.getUuid(), exception);
+                return;
+            }
+
+            log.info("Событие аудита отправлено. Topic: {}, partition: {}, offset: {}",
+                    result.getRecordMetadata().topic(),
+                    result.getRecordMetadata().partition(),
+                    result.getRecordMetadata().offset());
+        });
     }
 }
